@@ -24,11 +24,30 @@ async function run() {
     const specialtyCollection = client
       .db("Daktar-bari")
       .collection("specialty");
+    const userCollection = client.db("Daktar-bari").collection("users");
+
     app.get("/specialty", async (req, res) => {
       const query = {};
       const cursor = specialtyCollection.find(query);
       const specialty = await cursor.toArray();
       res.send(specialty);
+    });
+    app.put("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: user,
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      // const token = jwt.sign(
+      //   { email: email },
+      //   process.env.ACCESS_TOKEN_SECRET,
+      //   { expiresIn: "1h" }
+      // );
+      // res.send({ result, token });
+      res.send({ result });
     });
   } finally {
   }
