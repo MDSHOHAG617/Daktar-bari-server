@@ -25,6 +25,7 @@ async function run() {
       .db("Daktar-bari")
       .collection("specialty");
     const userCollection = client.db("Daktar-bari").collection("users");
+    const medicineCollection = client.db("tools-ware").collection("medicine");
 
     app.get("/specialty", async (req, res) => {
       const query = {};
@@ -49,6 +50,15 @@ async function run() {
       // res.send({ result, token });
       res.send({ result });
     });
+
+    app.post(
+      "/medicine",
+      /*verifyJWT,*/ async (req, res) => {
+        const newMedicine = req.body;
+        const result = await medicineCollection.insertOne(newMedicine);
+        res.send(result);
+      }
+    );
   } finally {
   }
 }
