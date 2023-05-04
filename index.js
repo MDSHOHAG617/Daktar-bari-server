@@ -25,7 +25,7 @@ async function run() {
       .db("Daktar-bari")
       .collection("specialty");
     const userCollection = client.db("Daktar-bari").collection("users");
-    const medicineCollection = client.db("tools-ware").collection("medicine");
+    const medicineCollection = client.db("Daktar-bari").collection("medicine");
 
     app.get("/specialty", async (req, res) => {
       const query = {};
@@ -50,7 +50,12 @@ async function run() {
       // res.send({ result, token });
       res.send({ result });
     });
-
+    app.get("/medicine", async (req, res) => {
+      const query = {};
+      const cursor = medicineCollection.find(query);
+      const medicine = await cursor.toArray();
+      res.send(medicine);
+    });
     app.post(
       "/medicine",
       /*verifyJWT,*/ async (req, res) => {
