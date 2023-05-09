@@ -8,7 +8,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@daktarbari.abvhg0c.mongodb.net/?retryWrites=true&w=majority`;
 // console.log(uri);
 const client = new MongoClient(uri, {
@@ -16,6 +16,22 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
   serverApi: ServerApiVersion.v1,
 });
+
+// JWT
+function verifyJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "UnAuthorized access" });
+  }
+  const token = authHeader.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+    if (err) {
+      return res.status(403).send({ message: "Forbidden access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
 async function run() {
   try {
     await client.connect();
@@ -43,21 +59,15 @@ async function run() {
         $set: user,
       };
       const result = await userCollection.updateOne(filter, updateDoc, options);
-      // const token = jwt.sign(
-      //   { email: email },
-      //   process.env.ACCESS_TOKEN_SECRET,
-      //   { expiresIn: "1h" }
-      // );
-      // res.send({ result, token });
-      res.send({ result });
-    });
-    app.get("/medicine", async (req, res) => {
-      const query = {};
-      const cursor = medicineCollection.find(query);
-      const medicine = await cursor.toArray();
-      res.send(medicine);
+      const token = jwt.sign(
+        { email: email },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "1h" }
+      );
+      res.send({ result, token });
     });
 
+    // medicines
     app.post(
       "/medicine",
       /*verifyJWT,*/ async (req, res) => {
@@ -66,6 +76,19 @@ async function run() {
         res.send(result);
       }
     );
+    app.get("/medicine", async (req, res) => {
+      const query = {};
+      const cursor = medicineCollection.find(query);
+      const medicine = await cursor.toArray();
+      res.send(medicine);
+    });
+
+    app.get("/medicine/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const medicine = await medicineCollection.findOne(query);
+      res.send(medicine);
+    });
     // orders
     app.post("/order", async (req, res) => {
       const order = req.body;
@@ -75,28 +98,31 @@ async function run() {
 
     app.get("/order/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: ObjectId(id) };
+      const query = { _id: new ObjectId(id) };
       const order = await orderCollection.findOne(query);
       res.send(order);
     });
 
     app.get("/order", async (req, res) => {
-      const customerEmail = req.query.customerEmail;
-      // const decodedEmail = req.decoded.email;
-      // if (customerEmail === decodedEmail) {
-      //   const query = { customerEmail: customerEmail };
-      //   const bookedOrder = await orderCollection.find(query).toArray();
-      //   return res.send(bookedOrder);
-      // } else {
-      //   return res.status(403).send({ message: "forbidden access" });
-      // }
-      // console.log("Auth Header", authorization);
-      // const authorization = req.headers.authorization;
-
-      const query = { customerEmail: customerEmail };
-      const bookedOrder = await orderCollection.find(query).toArray();
-      return res.send(bookedOrder);
+      const query = {};
+      const cursor = orderCollection.find(query);
+      const order = await cursor.toArray();
+      res.send(order);
     });
+
+    // app.get("/order", verifyJWT, async (req, res) => {
+    //   const customerEmail = req.query.customerEmail;
+    //   const decodedEmail = req.decoded.email;
+    //   if (customerEmail === decodedEmail) {
+    //     const query = { customerEmail: customerEmail };
+    //     const bookedOrder = await orderCollection.find(query).toArray();
+    //     return res.send(bookedOrder);
+    //   } else {
+    //     return res.status(403).send({ message: "forbidden access" });
+    //   }
+    //   // console.log("Auth Header", authorization);
+    //   // const authorization = req.headers.authorization;
+    // });
   } finally {
   }
 }
