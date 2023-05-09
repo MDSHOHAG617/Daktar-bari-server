@@ -26,6 +26,7 @@ async function run() {
       .collection("specialty");
     const userCollection = client.db("Daktar-bari").collection("users");
     const medicineCollection = client.db("Daktar-bari").collection("medicine");
+    const orderCollection = client.db("Daktar-bari").collection("orders");
 
     app.get("/specialty", async (req, res) => {
       const query = {};
@@ -56,6 +57,7 @@ async function run() {
       const medicine = await cursor.toArray();
       res.send(medicine);
     });
+
     app.post(
       "/medicine",
       /*verifyJWT,*/ async (req, res) => {
@@ -64,6 +66,37 @@ async function run() {
         res.send(result);
       }
     );
+    // orders
+    app.post("/order", async (req, res) => {
+      const order = req.body;
+      const result = await orderCollection.insertOne(order);
+      res.send(result);
+    });
+
+    app.get("/order/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const order = await orderCollection.findOne(query);
+      res.send(order);
+    });
+
+    app.get("/order", async (req, res) => {
+      const customerEmail = req.query.customerEmail;
+      // const decodedEmail = req.decoded.email;
+      // if (customerEmail === decodedEmail) {
+      //   const query = { customerEmail: customerEmail };
+      //   const bookedOrder = await orderCollection.find(query).toArray();
+      //   return res.send(bookedOrder);
+      // } else {
+      //   return res.status(403).send({ message: "forbidden access" });
+      // }
+      // console.log("Auth Header", authorization);
+      // const authorization = req.headers.authorization;
+
+      const query = { customerEmail: customerEmail };
+      const bookedOrder = await orderCollection.find(query).toArray();
+      return res.send(bookedOrder);
+    });
   } finally {
   }
 }
