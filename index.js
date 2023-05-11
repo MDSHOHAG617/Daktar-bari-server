@@ -103,26 +103,27 @@ async function run() {
       res.send(order);
     });
 
-    app.get("/order", async (req, res) => {
-      const query = {};
-      const cursor = orderCollection.find(query);
-      const order = await cursor.toArray();
-      res.send(order);
-    });
-
-    // app.get("/order", verifyJWT, async (req, res) => {
-    //   const customerEmail = req.query.customerEmail;
-    //   const decodedEmail = req.decoded.email;
-    //   if (customerEmail === decodedEmail) {
-    //     const query = { customerEmail: customerEmail };
-    //     const bookedOrder = await orderCollection.find(query).toArray();
-    //     return res.send(bookedOrder);
-    //   } else {
-    //     return res.status(403).send({ message: "forbidden access" });
-    //   }
-    //   // console.log("Auth Header", authorization);
-    //   // const authorization = req.headers.authorization;
+    // app.get("/order", async (req, res) => {
+    //   const query = {};
+    //   const cursor = orderCollection.find(query);
+    //   const order = await cursor.toArray();
+    //   res.send(order);
     // });
+
+    app.get("/order", async (req, res) => {
+      const customerEmail = req.query.customerEmail;
+      // console.log(customerEmail);
+      // const decodedEmail = req.decoded.email;
+      // if (customerEmail === decodedEmail) {
+      // } else {
+      //   return res.status(403).send({ message: "forbidden access" });
+      // }
+      // console.log("Auth Header", authorization);
+      // const authorization = req.headers.authorization;
+      const query = { customerEmail: customerEmail };
+      const bookedOrder = await orderCollection.find(query).toArray();
+      res.send(bookedOrder);
+    });
   } finally {
   }
 }
