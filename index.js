@@ -43,6 +43,7 @@ async function run() {
     const userCollection = client.db("Daktar-bari").collection("users");
     const medicineCollection = client.db("Daktar-bari").collection("medicine");
     const orderCollection = client.db("Daktar-bari").collection("orders");
+    const doctorCollection = client.db("Daktar-bari").collection("Doctors");
 
     app.get("/specialty", async (req, res) => {
       const query = {};
@@ -127,6 +128,20 @@ async function run() {
       const query = { customerEmail: customerEmail };
       const bookedOrder = await orderCollection.find(query).toArray();
       res.send(bookedOrder);
+    });
+
+    // Doctor's
+    app.post("/doctor", async (req, res) => {
+      const doctor = req.body;
+      const result = await doctorCollection.insertOne(doctor);
+      res.send(result);
+    });
+
+    app.get("/doctor", async (req, res) => {
+      const query = {};
+      const cursor = doctorCollection.find(query);
+      const doctor = await cursor.toArray();
+      res.send(doctor);
     });
   } finally {
   }
