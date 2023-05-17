@@ -137,6 +137,13 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/doctor/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const doctor = await doctorCollection.findOne(query);
+      res.send(doctor);
+    });
+
     app.get("/doctor", async (req, res) => {
       const query = {};
       const cursor = doctorCollection.find(query);
