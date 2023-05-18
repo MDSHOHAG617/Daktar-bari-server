@@ -108,13 +108,6 @@ async function run() {
       res.send(order);
     });
 
-    // app.get("/order", async (req, res) => {
-    //   const query = {};
-    //   const cursor = orderCollection.find(query);
-    //   const order = await cursor.toArray();
-    //   res.send(order);
-    // });
-
     app.get("/order", async (req, res) => {
       const customerEmail = req.query.customerEmail;
       // console.log(customerEmail);
@@ -149,6 +142,19 @@ async function run() {
       const cursor = doctorCollection.find(query);
       const doctor = await cursor.toArray();
       res.send(doctor);
+    });
+
+    // try
+    app.get("/doctor/title/:title", async (req, res) => {
+      const title = req.params.title;
+      const query = { title: title };
+      const doctor = await doctorCollection.find(query).toArray();
+
+      if (doctor) {
+        res.send(doctor);
+      } else {
+        res.status(404).json({ error: "Doctor not found" });
+      }
     });
   } finally {
   }
