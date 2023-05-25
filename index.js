@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -45,6 +46,7 @@ async function run() {
     const medicineCollection = client.db("Daktar-bari").collection("medicine");
     const orderCollection = client.db("Daktar-bari").collection("orders");
     const doctorCollection = client.db("Daktar-bari").collection("Doctors");
+    const paymentCollection = client.db("Daktar-bari").collection("payments");
     // specialty
     app.get("/specialty", async (req, res) => {
       const query = {};
@@ -127,7 +129,7 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/order/:id", async (req, res) => {
+    app.get("/order/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const order = await orderCollection.findOne(query);
@@ -170,7 +172,6 @@ async function run() {
       res.send(doctor);
     });
 
-    // try
     app.get("/doctor/category/:category", async (req, res) => {
       const category = req.params.category;
       const query = { category: category };
@@ -181,6 +182,38 @@ async function run() {
       } else {
         res.status(404).json({ error: "Doctor not found" });
       }
+    });
+
+    // payment
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const order = req.body;
+      const price = parseFloat(order.price);
+      const amount = price * 100;
+      console.log(order);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({ clientSecret: paymentIntent.client_secret });
+    });
+
+    app.patch("/order/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const result = await paymentCollection.insertOne(payment);
+      const updatedPayment = await orderCollection.updateOne(
+        filter,
+        updatedDoc
+      );
+      res.send(updatedDoc);
     });
   } finally {
   }
