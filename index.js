@@ -47,6 +47,7 @@ async function run() {
     const orderCollection = client.db("Daktar-bari").collection("orders");
     const doctorCollection = client.db("Daktar-bari").collection("Doctors");
     const paymentCollection = client.db("Daktar-bari").collection("payments");
+
     // specialty
     app.get("/specialty", async (req, res) => {
       const query = {};
