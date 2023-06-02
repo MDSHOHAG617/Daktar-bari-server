@@ -45,6 +45,7 @@ async function run() {
     const userCollection = client.db("Daktar-bari").collection("users");
     const medicineCollection = client.db("Daktar-bari").collection("medicine");
     const orderCollection = client.db("Daktar-bari").collection("orders");
+    const bookingCollection = client.db("Daktar-bari").collection("Bookings");
     const doctorCollection = client.db("Daktar-bari").collection("Doctors");
     const paymentCollection = client.db("Daktar-bari").collection("payments");
 
@@ -148,8 +149,47 @@ async function run() {
       } else {
         return res.status(403).send({ message: "forbidden access" });
       }
-      // console.log("Auth Header", authorization);
-      // const authorization = req.headers.authorization;
+    });
+    // Booking
+    app.post("/booking", async (req, res) => {
+      const booking = req.body;
+      const result = await bookingCollection.insertOne(booking);
+      res.send(result);
+    });
+    app.get("/booking/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const booking = await bookingCollection.findOne(query);
+      res.send(booking);
+    });
+    app.get("/booking", verifyJWT, async (req, res) => {
+      const customerEmail = req.query.customerEmail;
+      // console.log(customerEmail);
+      const decodedEmail = req.decoded.email;
+      if (customerEmail === decodedEmail) {
+        const query = { customerEmail: customerEmail };
+        const bookedOrder = await bookingCollection.find(query).toArray();
+        return res.send(bookedOrder);
+      } else {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+    });
+    app.patch("/booking/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const result = await paymentCollection.insertOne(payment);
+      const updatedPayment = await bookingCollection.updateOne(
+        filter,
+        updatedDoc
+      );
+      res.send(updatedDoc);
     });
 
     // Doctor's
