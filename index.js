@@ -48,6 +48,9 @@ async function run() {
     const bookingCollection = client.db("Daktar-bari").collection("Bookings");
     const doctorCollection = client.db("Daktar-bari").collection("Doctors");
     const paymentCollection = client.db("Daktar-bari").collection("payments");
+    const bookingPaymentCollection = client
+      .db("Daktar-bari")
+      .collection("BookingPayments");
 
     // specialty
     app.get("/specialty", async (req, res) => {
@@ -174,6 +177,20 @@ async function run() {
         return res.status(403).send({ message: "forbidden access" });
       }
     });
+    // booking payments
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const order = req.body;
+      const price = parseFloat(order.price);
+      const amount = price * 100;
+      console.log(order);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({ clientSecret: paymentIntent.client_secret });
+    });
+
     app.patch("/booking/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const payment = req.body;
@@ -191,7 +208,24 @@ async function run() {
       );
       res.send(updatedDoc);
     });
-
+    // try
+    app.patch("/order/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const result = await paymentCollection.insertOne(payment);
+      const updatedPayment = await orderCollection.updateOne(
+        filter,
+        updatedDoc
+      );
+      res.send(updatedDoc);
+    });
     // Doctor's
     app.post("/doctor", async (req, res) => {
       const doctor = req.body;
@@ -225,37 +259,37 @@ async function run() {
       }
     });
 
-    // payment
-    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
-      const order = req.body;
-      const price = parseFloat(order.price);
-      const amount = price * 100;
-      console.log(order);
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount,
-        currency: "usd",
-        payment_method_types: ["card"],
-      });
-      res.send({ clientSecret: paymentIntent.client_secret });
-    });
+    // Orders payment
+    // app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+    //   const order = req.body;
+    //   const price = parseFloat(order.price);
+    //   const amount = price * 100;
+    //   console.log(order);
+    //   const paymentIntent = await stripe.paymentIntents.create({
+    //     amount: amount,
+    //     currency: "usd",
+    //     payment_method_types: ["card"],
+    //   });
+    //   res.send({ clientSecret: paymentIntent.client_secret });
+    // });
 
-    app.patch("/order/:id", verifyJWT, async (req, res) => {
-      const id = req.params.id;
-      const payment = req.body;
-      const filter = { _id: new ObjectId(id) };
-      const updatedDoc = {
-        $set: {
-          paid: true,
-          transactionId: payment.transactionId,
-        },
-      };
-      const result = await paymentCollection.insertOne(payment);
-      const updatedPayment = await orderCollection.updateOne(
-        filter,
-        updatedDoc
-      );
-      res.send(updatedDoc);
-    });
+    // app.patch("/order/:id", verifyJWT, async (req, res) => {
+    //   const id = req.params.id;
+    //   const payment = req.body;
+    //   const filter = { _id: new ObjectId(id) };
+    //   const updatedDoc = {
+    //     $set: {
+    //       paid: true,
+    //       transactionId: payment.transactionId,
+    //     },
+    //   };
+    //   const result = await paymentCollection.insertOne(payment);
+    //   const updatedPayment = await orderCollection.updateOne(
+    //     filter,
+    //     updatedDoc
+    //   );
+    //   res.send(updatedDoc);
+    // });
   } finally {
   }
 }
