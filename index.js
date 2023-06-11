@@ -42,15 +42,18 @@ async function run() {
     const specialtyCollection = client
       .db("Daktar-bari")
       .collection("specialty");
+    const HealthPlansCollection = client
+      .db("Daktar-bari")
+      .collection("Health Plans");
     const userCollection = client.db("Daktar-bari").collection("users");
     const medicineCollection = client.db("Daktar-bari").collection("medicine");
     const orderCollection = client.db("Daktar-bari").collection("orders");
     const bookingCollection = client.db("Daktar-bari").collection("Bookings");
     const doctorCollection = client.db("Daktar-bari").collection("Doctors");
     const paymentCollection = client.db("Daktar-bari").collection("payments");
-    const bookingPaymentCollection = client
-      .db("Daktar-bari")
-      .collection("BookingPayments");
+    // const bookingPaymentCollection = client
+    //   .db("Daktar-bari")
+    //   .collection("BookingPayments");
 
     // specialty
     app.get("/specialty", async (req, res) => {
@@ -58,6 +61,13 @@ async function run() {
       const cursor = specialtyCollection.find(query);
       const specialty = await cursor.toArray();
       res.send(specialty);
+    });
+    // specialty
+    app.get("/HealthPlans", async (req, res) => {
+      const query = {};
+      const cursor = HealthPlansCollection.find(query);
+      const HealthPlans = await cursor.toArray();
+      res.send(HealthPlans);
     });
     // user
     app.get("/user", verifyJWT, async (req, res) => {
