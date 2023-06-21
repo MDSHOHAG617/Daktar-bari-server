@@ -42,9 +42,13 @@ async function run() {
     const specialtyCollection = client
       .db("Daktar-bari")
       .collection("specialty");
-    const HealthPlansCollection = client
+    const healthPlansCollection = client
       .db("Daktar-bari")
       .collection("Health Plans");
+
+    const subscriptionCollection = client
+      .db("Daktar-bari")
+      .collection("Subscriptions");
     const userCollection = client.db("Daktar-bari").collection("users");
     const medicineCollection = client.db("Daktar-bari").collection("medicine");
     const orderCollection = client.db("Daktar-bari").collection("orders");
@@ -63,11 +67,44 @@ async function run() {
       res.send(specialty);
     });
     // specialty
-    app.get("/HealthPlans", async (req, res) => {
+    app.get("/healthPlans", async (req, res) => {
       const query = {};
-      const cursor = HealthPlansCollection.find(query);
-      const HealthPlans = await cursor.toArray();
-      res.send(HealthPlans);
+      const cursor = healthPlansCollection.find(query);
+      const healthPlans = await cursor.toArray();
+      res.send(healthPlans);
+    });
+    app.get("/healthPlans/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const healthPlans = await healthPlansCollection.findOne(query);
+      res.send(healthPlans);
+    });
+    // Subscription
+    app.post("/subscriptions", async (req, res) => {
+      const subscription = req.body;
+      const result = await subscriptionCollection.insertOne(subscription);
+      res.send(result);
+    });
+    app.get("/subscriptions/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const subscription = await subscriptionCollection.findOne(query);
+      res.send(subscription);
+    });
+
+    app.get("/subscriptions", verifyJWT, async (req, res) => {
+      const customerEmail = req.query.customerEmail;
+      // console.log(customerEmail);
+      const decodedEmail = req.decoded.email;
+      if (customerEmail === decodedEmail) {
+        const query = { customerEmail: customerEmail };
+        const bookedSubscription = await subscriptionCollection
+          .find(query)
+          .toArray();
+        return res.send(bookedSubscription);
+      } else {
+        return res.status(403).send({ message: "forbidden access" });
+      }
     });
     // user
     app.get("/user", verifyJWT, async (req, res) => {
@@ -218,7 +255,7 @@ async function run() {
       );
       res.send(updatedDoc);
     });
-    // try
+    // Order payments
     app.patch("/order/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const payment = req.body;
@@ -231,6 +268,25 @@ async function run() {
       };
       const result = await paymentCollection.insertOne(payment);
       const updatedPayment = await orderCollection.updateOne(
+        filter,
+        updatedDoc
+      );
+      res.send(updatedDoc);
+    });
+    // Subscription payments
+
+    app.patch("/subscriptions/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const payment = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          paid: true,
+          transactionId: payment.transactionId,
+        },
+      };
+      const result = await paymentCollection.insertOne(payment);
+      const updatedPayment = await subscriptionCollection.updateOne(
         filter,
         updatedDoc
       );
