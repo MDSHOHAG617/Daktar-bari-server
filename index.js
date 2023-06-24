@@ -85,7 +85,7 @@ async function run() {
       const result = await subscriptionCollection.insertOne(subscription);
       res.send(result);
     });
-    app.get("/subscriptions/:id", verifyJWT, async (req, res) => {
+    app.get("/subscriptions/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const subscription = await subscriptionCollection.findOne(query);
