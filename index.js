@@ -80,7 +80,7 @@ async function run() {
       res.send(healthPlans);
     });
     // Subscription
-    app.post("/subscriptions", async (req, res) => {
+    app.post("/subscriptions", verifyJWT, async (req, res) => {
       const subscription = req.body;
       const result = await subscriptionCollection.insertOne(subscription);
       res.send(result);
