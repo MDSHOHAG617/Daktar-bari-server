@@ -80,12 +80,12 @@ async function run() {
       res.send(healthPlans);
     });
     // Subscription
-    app.post("/subscriptions", verifyJWT, async (req, res) => {
+    app.post("/subscriptions", async (req, res) => {
       const subscription = req.body;
       const result = await subscriptionCollection.insertOne(subscription);
       res.send(result);
     });
-    app.get("/subscriptions/:id", async (req, res) => {
+    app.get("/subscriptions/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const subscription = await subscriptionCollection.findOne(query);
@@ -173,6 +173,12 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const medicine = await medicineCollection.findOne(query);
       res.send(medicine);
+    });
+    app.delete("/medicine/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const result = await medicineCollection.deleteOne(filter);
+      res.send(result);
     });
     // orders
     app.post("/order", async (req, res) => {
