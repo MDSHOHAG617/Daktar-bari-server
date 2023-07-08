@@ -51,6 +51,9 @@ async function run() {
       .collection("Subscriptions");
     const userCollection = client.db("Daktar-bari").collection("users");
     const medicineCollection = client.db("Daktar-bari").collection("medicine");
+    const prescriptionCollection = client
+      .db("Daktar-bari")
+      .collection("Prescription");
     const orderCollection = client.db("Daktar-bari").collection("orders");
     const bookingCollection = client.db("Daktar-bari").collection("Bookings");
     const doctorCollection = client.db("Daktar-bari").collection("Doctors");
@@ -331,37 +334,18 @@ async function run() {
       }
     });
 
-    // Orders payment
-    // app.post("/create-payment-intent", verifyJWT, async (req, res) => {
-    //   const order = req.body;
-    //   const price = parseFloat(order.price);
-    //   const amount = price * 100;
-    //   console.log(order);
-    //   const paymentIntent = await stripe.paymentIntents.create({
-    //     amount: amount,
-    //     currency: "usd",
-    //     payment_method_types: ["card"],
-    //   });
-    //   res.send({ clientSecret: paymentIntent.client_secret });
-    // });
-
-    // app.patch("/order/:id", verifyJWT, async (req, res) => {
-    //   const id = req.params.id;
-    //   const payment = req.body;
-    //   const filter = { _id: new ObjectId(id) };
-    //   const updatedDoc = {
-    //     $set: {
-    //       paid: true,
-    //       transactionId: payment.transactionId,
-    //     },
-    //   };
-    //   const result = await paymentCollection.insertOne(payment);
-    //   const updatedPayment = await orderCollection.updateOne(
-    //     filter,
-    //     updatedDoc
-    //   );
-    //   res.send(updatedDoc);
-    // });
+    // Prescription
+    app.post("/prescription", async (req, res) => {
+      const newPrescription = req.body;
+      const result = await prescriptionCollection.insertOne(newPrescription);
+      res.send(result);
+    });
+    app.get("/prescription", async (req, res) => {
+      const query = {};
+      const cursor = prescriptionCollection.find(query);
+      const prescription = await cursor.toArray();
+      res.send(prescription);
+    });
   } finally {
   }
 }
