@@ -340,11 +340,25 @@ async function run() {
       const result = await prescriptionCollection.insertOne(newPrescription);
       res.send(result);
     });
-    app.get("/prescription", async (req, res) => {
-      const query = {};
-      const cursor = prescriptionCollection.find(query);
-      const prescription = await cursor.toArray();
+    app.get("/prescription/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const prescription = await prescriptionCollection.findOne(query);
       res.send(prescription);
+    });
+    app.get("/prescription", verifyJWT, async (req, res) => {
+      const customerEmail = req.query.customerEmail;
+      // console.log(customerEmail);
+      const decodedEmail = req.decoded.email;
+      if (customerEmail === decodedEmail) {
+        const query = { ptEmail: customerEmail };
+        const myPrescription = await prescriptionCollection
+          .find(query)
+          .toArray();
+        return res.send(myPrescription);
+      } else {
+        return res.status(403).send({ message: "forbidden access" });
+      }
     });
   } finally {
   }
