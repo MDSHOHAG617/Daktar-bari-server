@@ -154,6 +154,30 @@ async function run() {
       const isAdmin = user.role === "admin";
       res.send({ admin: isAdmin });
     });
+    // Doctor user
+    app.put("/user/doctor/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const requester = req.decoded.email;
+      const requesterAccount = await userCollection.findOne({
+        email: requester,
+      });
+      if (requesterAccount.doctorRole === "doctor") {
+        const filter = { email: email };
+        const updateDoc = {
+          $set: { doctorRole: "doctor" },
+        };
+        const result = await userCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      } else {
+        res.status(403).send({ message: "forbidden" });
+      }
+    });
+    app.get("/doctor/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = await userCollection.findOne({ email: email });
+      const isDoctor = user.doctorRole === "doctor";
+      res.send({ doctor: isDoctor });
+    });
 
     // medicines
     app.post(
